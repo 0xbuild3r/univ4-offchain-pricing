@@ -103,7 +103,8 @@ contract OffchainPricingTest is Test, Deployers, GasSnapshot {
         hook.deposit(address(token1),10000 ether);
     }
     function test() public {
-        impl.whitelist(address(router));
+        hook.setAdmin(address(this));
+        hook.whitelist(address(router));
         int24 tick = Tick.priceToTick(uint256(1500));
 
         // configure inputs for the test

@@ -43,9 +43,7 @@ contract OffchainPricing is UniV4UserHook, Test {
         _;
     }
 
-    constructor(IPoolManager _poolManager) UniV4UserHook(_poolManager) {
-        admin = msg.sender;
-    }
+    constructor(IPoolManager _poolManager) UniV4UserHook(_poolManager) {}
 
     function getHooksCalls() public pure override returns (Hooks.Calls memory) {
         return Hooks.Calls({
@@ -62,8 +60,6 @@ contract OffchainPricing is UniV4UserHook, Test {
 
     function deposit(address token, uint256 amount) external {
         IERC20(token).transferFrom(msg.sender, address(this), amount);
-        console.log(address(this));
-        console.log(IERC20(token).balanceOf(address(this)));
     }
 
     function beforeModifyPosition(
@@ -72,7 +68,7 @@ contract OffchainPricing is UniV4UserHook, Test {
         IPoolManager.ModifyPositionParams calldata,
         bytes calldata
     ) external override returns (bytes4) {
-        //require(msg.sender == address(this), "position cannot be modified by anyone");
+        require(msg.sender == address(poolManager), "position cannot be modified by anyone");
         return OffchainPricing.beforeModifyPosition.selector;
     }
 
@@ -83,11 +79,10 @@ contract OffchainPricing is UniV4UserHook, Test {
         bytes calldata liquiditySettings
     ) external override returns (bytes4) {
         // only allow whitelisted addresses to call this function
-        //require(isWhitelisted[sender], "sender not whitelisted");
+        require(isWhitelisted[sender], "sender not whitelisted");
 
         // restore liquidity info from bytes calldata
         LiquiditySettings memory settings = bytesToLiquiditySettings(liquiditySettings);
-        console2.log(settings.zeroForOne);
         
         // Withdraw liquidity from lending protocol and deploy to pool
         // zeroForOne = true = sell token 0 for token 1, and vice versa
@@ -186,6 +181,11 @@ contract OffchainPricing is UniV4UserHook, Test {
     // -- admin functions -- //
     function whitelist(address executor) external adminOnly {
         isWhitelisted[executor] = true;
+    }
+
+    function setAdmin(address adminAddress) external {
+        require(admin == address(0), "admin already set");
+        admin = adminAddress;
     }
     
     function bytesToLiquiditySettings(bytes memory encodedSettings) public pure returns (LiquiditySettings memory) {
