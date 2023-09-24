@@ -41,5 +41,5 @@ This project's code bases are inspired from [Stoploss hooks](https://github.com/
 ## Tests
 requires foundry
 ```
-forge test 
+forge test --via-ir 
 ```
