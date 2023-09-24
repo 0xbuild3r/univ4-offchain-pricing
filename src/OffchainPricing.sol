@@ -88,8 +88,6 @@ contract OffchainPricing is UniV4UserHook, Test {
         // restore liquidity info from bytes calldata
         LiquiditySettings memory settings = bytesToLiquiditySettings(liquiditySettings);
         console2.log(settings.zeroForOne);
-        // get price data and validate input
-        //(, int24 currentTick, , , , ) = poolManager.getSlot0(key.toId());
         
         // Withdraw liquidity from lending protocol and deploy to pool
         // zeroForOne = true = sell token 0 for token 1, and vice versa
@@ -130,7 +128,6 @@ contract OffchainPricing is UniV4UserHook, Test {
 
         // Calculate the token amounts
         LiquiditySettings memory settings = bytesToLiquiditySettings(liquiditySettings);
-        (, int24 currentTick, , , , ) = poolManager.getSlot0(key.toId());
         uint128 liquidity = poolManager.getLiquidity(key.toId());
 
         int24 tickLower;
@@ -145,9 +142,6 @@ contract OffchainPricing is UniV4UserHook, Test {
         
         uint160 sqrtPriceLower = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceUpper = TickMath.getSqrtRatioAtTick(tickUpper);
-
-        uint160 token0Amount = liquidity * (sqrtPriceUpper - sqrtPriceLower);
-        uint160 token1Amount = liquidity / (sqrtPriceUpper - sqrtPriceLower);
 
         //withdraw liquidity and deposit to lending protocol
         if(settings.zeroForOne){
@@ -189,50 +183,11 @@ contract OffchainPricing is UniV4UserHook, Test {
         // do something here (out of scope for this hackathon)
     }
 
-    function balanceOfToken0() internal {
-
-    }
-
-    function balanceOfToken1() internal {
-        
-    }
-
     // -- admin functions -- //
     function whitelist(address executor) external adminOnly {
         isWhitelisted[executor] = true;
     }
-    /*
-    // -- Util functions -- //
-    function bytesToLiquiditySettings(bytes memory input) public  returns (LiquiditySettings memory) {
-        console.log(input.length);
-        require(input.length == 4, "Input should be 4 bytes");
     
-        int24 tickToSet = int24((uint24(uint8(input[0])) << 16) + (uint24(uint8(input[1])) << 8) + uint24(uint8(input[2])));
-    
-        // Promote tickToSet to int256 for bitwise operation and arithmetic
-        int256 tempTickToSet = int256(tickToSet);
-        
-        // Check the sign bit (23rd bit from the right, 0-indexed)
-        if (tempTickToSet & (1 << 23) != 0) {
-            // If the sign bit is set, adjust the value to make it negative
-            tempTickToSet -= (1 << 24);
-        }
-        
-        // Cast the result back to int24
-        tickToSet = int24(tempTickToSet);
-        
-        bool zeroForOne = input[3] != 0;
-        
-        // Initialize the requiredLiquidity field. You may need to set it to an appropriate value based on your logic.
-        int256 requiredLiquidity = 0; // Set to an appropriate value
-        
-        return LiquiditySettings({
-            tickToSet: tickToSet,
-            zeroForOne: zeroForOne,
-            requiredLiquidity: requiredLiquidity
-        });
-    }
-    */
     function bytesToLiquiditySettings(bytes memory encodedSettings) public pure returns (LiquiditySettings memory) {
         require(encodedSettings.length == 36, "Invalid encodedSettings length");
         
